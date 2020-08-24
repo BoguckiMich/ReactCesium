@@ -14,6 +14,7 @@ import {
 } from "resium";
 import {
   Cartesian3,
+  Cartesian2,
   WebMapServiceImageryProvider,
   IonResource,
   Ion,
@@ -56,20 +57,55 @@ function App() {
     e.preventDefault();
     setSceneMode(SceneMode.SCENE2D);
   }
+  let viewer;
+
+  const radiansToDegrees = (radians) => {
+    let pi = Math.PI;
+    return radians * (180 / pi);
+  };
+
+  const getLocationFromScreenXY = (x, y) => {
+    const scene = viewer.scene;
+    if (!scene) return;
+    const ellipsoid = scene.globe.ellipsoid;
+    const cartesian = scene.camera.pickEllipsoid(
+      new Cartesian2(x, y),
+      ellipsoid
+    );
+    if (!cartesian) return;
+    const { latitude, longitude, height } = ellipsoid.cartesianToCartographic(
+      cartesian
+    );
+    const lat = radiansToDegrees(latitude);
+    const long = radiansToDegrees(longitude);
+    console.log(lat, long, height);
+    return { lat, long, height };
+  };
+
+  const handleOnClick = (e) => {
+    console.log(e);
+    getLocationFromScreenXY(e.position.x, e.position.y);
+    const earthPosition = viewer.scene.pickPosition(e.position);
+    console.log(earthPosition);
+  };
 
   return (
     <>
       <CesiumWidget
         terrainProvider={terrain3D ? terrainProvider : createWorldTerrain()}
+        onClick={handleOnClick}
+        ref={(e) => {
+          viewer = e ? e.cesiumElement : null;
+        }}
       >
         <Camera
           position={cameraPosition}
           up={Cartesian3.clone(Cartesian3.UNIT_Y)}
           direction={cameraDirection}
-          onChange={() => {
-            console.log(cameraPosition);
-            console.log(cameraDirection);
-          }}
+          // onChange={() => {
+          //   console.log(cameraPosition);
+          //   console.log(cameraDirection);
+          // }}
         />
         <Scene mode={sceneMode} />
         <ImageryLayerCollection>
