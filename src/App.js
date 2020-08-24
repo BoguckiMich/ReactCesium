@@ -17,43 +17,67 @@ import {
   WebMapServiceImageryProvider,
   IonResource,
   Ion,
+  TerrainProvider,
+  CesiumTerrainProvider,
+  createWorldTerrain,
+  SceneMode,
 } from "cesium";
 
-Ion.defaultAccessToken =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlODFiNzFkOC01Y2VkLTQzMzUtYjFkYi0yOTRhNDkyNDg5MzkiLCJpZCI6MzEwODEsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1OTQ4MDY5Njl9.eM9Y6E3wuMjFcUoCxhnAbDH5ATjSHQIOIykE95HFeII";
+// Ion.defaultAccessToken =
+//   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlODFiNzFkOC01Y2VkLTQzMzUtYjFkYi0yOTRhNDkyNDg5MzkiLCJpZCI6MzEwODEsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1OTQ4MDY5Njl9.eM9Y6E3wuMjFcUoCxhnAbDH5ATjSHQIOIykE95HFeII";
 
 const position = Cartesian3.fromDegrees(18.592764, 54.351614, 30);
 const pointGraphics = { pixelSize: 10 };
+// const terrainProvider = createWorldTerrain();
+const terrainProvider = new CesiumTerrainProvider({
+  url: IonResource.fromAssetId(124939),
+});
 
 function App() {
   const [cameraPosition, setCameraPosition] = useState(
     Cartesian3.fromDegrees(18.592764, 54.351614, 3000)
   );
   const [cameraDirection, setCameraDirection] = useState(
-    Cartesian3.fromDegrees(18, 54, 100)
+    Cartesian3.negate(Cartesian3.UNIT_Z, new Cartesian3())
   );
+  const [terrain3D, setTerrain3D] = useState(false);
+  const [sceneMode, setSceneMode] = useState(SceneMode.SCENE2D);
 
-  let viewer;
+  function handleClick(e) {
+    e.preventDefault();
+    setTerrain3D(!terrain3D);
+  }
 
-  const handleReady = (tileset) => {
-    if (viewer) {
-      viewer.zoomTo(tileset);
-    }
-  };
+  function handleSceneModeTo3D(e) {
+    e.preventDefault();
+    setSceneMode(SceneMode.SCENE3D);
+  }
+  function handleSceneModeTo2D(e) {
+    e.preventDefault();
+    setSceneMode(SceneMode.SCENE2D);
+  }
 
   return (
     <>
       <CesiumWidget
-        ref={(e) => {
-          viewer = e && e.cesiumElement;
-        }}
+        terrainProvider={terrain3D ? terrainProvider : createWorldTerrain()}
       >
+        <Camera
+          position={cameraPosition}
+          up={Cartesian3.clone(Cartesian3.UNIT_Y)}
+          direction={cameraDirection}
+          onChange={() => {
+            console.log(cameraPosition);
+            console.log(cameraDirection);
+          }}
+        />
+        <Scene mode={sceneMode} />
         <ImageryLayerCollection>
           <ImageryLayer
             imageryProvider={
               new WebMapServiceImageryProvider({
                 url: "http://figeo.geopartner.gda.pl/geoserver/wms",
-                layers: "GDDKIA:S7_zad2_38000-39000_2015-10-30_projekt",
+                layers: "2020-03_s6_z2_6_500-7_200_orto",
                 parameters: { format: "image/png", TRANSPARENT: true },
               })
             }
@@ -62,15 +86,11 @@ function App() {
             imageryProvider={
               new WebMapServiceImageryProvider({
                 url: "http://figeo.geopartner.gda.pl/geoserver/wms",
-                layers: "GDDKIA:S7_zad2_38000-39000_2019-05-24",
+                layers: "2020-03_s6_z2_5_500-6_500_orto",
                 parameters: { format: "image/png", TRANSPARENT: true },
               })
             }
           ></ImageryLayer>
-          <Cesium3DTileset
-            url={IonResource.fromAssetId(124872)}
-            onReady={handleReady}
-          />
         </ImageryLayerCollection>
         <Entity position={position} name="Geopartner" point={pointGraphics}>
           <EntityDescription>
@@ -78,7 +98,9 @@ function App() {
             <p>but they pay nothing</p>
           </EntityDescription>
         </Entity>
-        {/* <button onClick={setSecondCesium(!secondCesium)}></button> */}
+        <button onClick={handleClick}>Show terrain 3d</button>
+        <button onClick={handleSceneModeTo2D}>2d</button>
+        <button onClick={handleSceneModeTo3D}>3d</button>
       </CesiumWidget>
     </>
   );
