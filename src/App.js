@@ -68,14 +68,18 @@ function App() {
     const scene = viewer.scene;
     if (!scene) return;
     const ellipsoid = scene.globe.ellipsoid;
+    // console.table(ellipsoid);
     const cartesian = scene.camera.pickEllipsoid(
       new Cartesian2(x, y),
       ellipsoid
     );
+    console.table(cartesian);
     if (!cartesian) return;
     const { latitude, longitude, height } = ellipsoid.cartesianToCartographic(
       cartesian
     );
+    console.log(ellipsoid.cartesianToCartographic(cartesian));
+
     const lat = radiansToDegrees(latitude);
     const long = radiansToDegrees(longitude);
     console.log(lat, long, height);
@@ -85,8 +89,8 @@ function App() {
   const handleOnClick = (e) => {
     console.log(e);
     getLocationFromScreenXY(e.position.x, e.position.y);
-    const earthPosition = viewer.scene.pickPosition(e.position);
-    console.log(earthPosition);
+    // const earthPosition = viewer.scene.pickPosition(e.position);
+    // console.log(earthPosition);
   };
 
   return (
@@ -123,6 +127,15 @@ function App() {
               new WebMapServiceImageryProvider({
                 url: "http://figeo.geopartner.gda.pl/geoserver/wms",
                 layers: "2020-03_s6_z2_5_500-6_500_orto",
+                parameters: { format: "image/png", TRANSPARENT: true },
+              })
+            }
+          ></ImageryLayer>
+          <ImageryLayer
+            imageryProvider={
+              new WebMapServiceImageryProvider({
+                url: "http://figeo.geopartner.gda.pl/geoserver/wms",
+                layers: "2019-01-30_s6_zad2_mdcp",
                 parameters: { format: "image/png", TRANSPARENT: true },
               })
             }
